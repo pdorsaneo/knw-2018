@@ -1,16 +1,12 @@
-// This example shows how to move the DC motors.
 
 import java.util.ArrayList;
 
 import rxtxrobot.*;
 
-public class OneIR
-{
-
-	public static void main(String[] args)
-	{
-
-		RXTXRobot r = new ArduinoNano(); // Create RXTXRobot object
+public class NavAngleGKV {
+  public static void main(String args[]) {
+	  
+	  RXTXRobot r = new ArduinoNano(); // Create RXTXRobot object
 
 		r.setPort("COM3"); // sets the port to COM3
 
@@ -129,8 +125,38 @@ public class OneIR
 			angleKV = Math.abs(averageK - averageV);
 			System.out.println("The angle between K and V is " + angleKV);
 			
-		}//end main
-		
-	public static RXTXRobot r;
+			
+			
+    int retval;
+    double[] soln;
+    Navigation nav;
+/*   if (args.length != 2) 
+    {
+      System.err.println("Usage: Example <theta a in degrees> <theta b in degrees>");
+      return;
+    }*/
+// Create an instance of the Navigation object class
+    nav = new Navigation();
+// The two beacon angle differences can be set and the solver run any number of times
+    nav.setAngles(angleKV,angleGK); // input the angles OneIR method receives
 
-}// end class ReadIR
+// Run solver to find unknown robot coordinates
+// RETURN_RANGE, RETURN_SUCCESS, RETURN_SINGULAR, and RETURN_DIVERGENCE are error codes from our code, don't worry about them
+    retval = nav.newton_raphson();
+    if (retval == Navigation.RETURN_SUCCESS) {
+// Retrieve solution of coordinates
+      soln = nav.getSolution();
+      System.out.println("(x,y) coordinates of robot = (" +
+                         soln[0] + "," + soln[1] + ")");
+    }
+    else if (retval == Navigation.RETURN_RANGE) {
+      System.err.println("Angle out of range");
+    }
+    else if (retval == Navigation.RETURN_SINGULAR) {
+      System.err.println("Singular Jacobian matrix");
+    }
+    else if (retval == Navigation.RETURN_DIVERGENCE) {
+      System.err.println("Convergence failure in 100 iterations");
+    }
+  }
+}
